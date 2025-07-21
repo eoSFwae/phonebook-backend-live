@@ -37,6 +37,8 @@ personSchema.set('toJSON', {
 
 const Person = mongoose.model('Person', personSchema)
 
+module.exports = Person
+
 // if (process.argv.length === 2) {
 //     Person.find({}).then(result => {
 //         console.log("phonebook:")
@@ -58,5 +60,3 @@ const Person = mongoose.model('Person', personSchema)
 //
 // }
 
-
-module.exports = mongoose.model("Person", Person)

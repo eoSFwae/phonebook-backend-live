@@ -25,7 +25,7 @@ const personSchema = new mongoose.Schema({
     // With Validation
     name: {
         type: String,
-        minlength: 5
+        minlength: 3
     },
     number: String,
 })

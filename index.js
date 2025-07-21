@@ -13,29 +13,6 @@ app.use(express.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 
-let persons =  [
-    {
-        "id": "1",
-        "name": "Arto Hellas",
-        "number": "040-123456"
-    },
-    {
-        "id": "2",
-        "name": "Ada Lovelace",
-        "number": "39-44-5323523"
-    },
-    {
-        "id": "3",
-        "name": "Dan Abramov",
-        "number": "12-43-234345"
-    },
-    {
-        "id": "4",
-        "name": "Mary Poppendieck",
-        "number": "39-23-6423422"
-    }
-]
-
 const generateId = ()=>{
     return Math.floor(Math.random() * 95955);
 }
@@ -58,14 +35,15 @@ app.get('/api/info', (request, response) => {
 
 })
 
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
     const id = request.params.id
     Person.findById(id).then(person => {
         if (person) {response.json(person)}
         else{response.status(404).end()}
     }).catch(error => {
-        console.log(error)
-        response.status(400).json({ error: 'malformatted id' })
+        // console.log(error)
+        // response.status(400).json({ error: 'malformatted id' })
+        next(error);
     })
 
 })
@@ -116,7 +94,17 @@ app.post('/api/persons', (request, response) => {
     })
 })
 
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
 
+    if (error.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+    }
+
+    next(error)
+}
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT)

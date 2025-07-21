@@ -17,13 +17,15 @@ const generateId = ()=>{
     return Math.floor(Math.random() * 95955);
 }
 
-app.get('/api/persons', (request, response) => {
+app.get('/api/persons', (request, response, next) => {
     Person.find({}).then(persons => {
         response.json(persons)
+    }).catch(err => {
+        next(err);
     })
 })
 
-app.get('/api/info', (request, response) => {
+app.get('/api/info', (request, response, next) => {
     Person.countDocuments({}).then(count => {
         const date = new Date();
         response.set('content-type', 'text/html');
@@ -31,6 +33,8 @@ app.get('/api/info', (request, response) => {
             `<p>Phonebook has info for ${count} people</p>
                <p>${date}</p>
     `);
+    }).catch(err => {
+        next(err);
     })
 
 })
@@ -48,17 +52,17 @@ app.get('/api/persons/:id', (request, response, next) => {
 
 })
 
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
     const id = request.params.id
     Person.findByIdAndDelete(id).then(person => {
         response.status(204).end()
     })
         .catch(e => {
-            response.status(400).json({error: e.message})
+            next(e);
         })
 })
 
-app.put('/api/persons/:id', (request, response) => {
+app.put('/api/persons/:id', (request, response, next) => {
     const id = request.params.id
     const body = request.body
     const updatePerson = {
@@ -68,11 +72,12 @@ app.put('/api/persons/:id', (request, response) => {
     Person.findByIdAndUpdate(id, updatePerson ,{new:true})
         .then(person => {
             if (person) {response.json(person)}
-            else{response.status(404).end()}
-        })
+        }).catch(err => {
+            next(err);
+    })
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response,next) => {
     // const id = generateId()
     const body = request.body
 
@@ -91,6 +96,8 @@ app.post('/api/persons', (request, response) => {
 
     person.save().then((savedPerson) => {
         response.json(savedPerson)
+    }).catch(err => {
+        next(err);
     })
 })
 
@@ -99,6 +106,12 @@ const errorHandler = (error, request, response, next) => {
 
     if (error.name === 'CastError') {
         return response.status(400).send({ error: 'malformatted id' })
+    }
+    else if (error.name === 'ValidationError') {
+        return response.status(400).json({ error: error.message })
+    }
+    else if (error.name === 'DocumentNotFoundError') {
+        return response.status(404).json({ error: 'document not found' })
     }
 
     next(error)
